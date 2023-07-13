@@ -6,6 +6,7 @@ import 'package:hyper_thread_downloader/src/model/chunk_model.dart';
 import 'package:hyper_thread_downloader/src/model/download_info.dart';
 import 'package:hyper_thread_downloader/src/thread_manager/main_thread_manager.dart';
 import 'package:hyper_thread_downloader/src/util/log_util.dart';
+import 'package:hyper_thread_downloader/src/util/string_util.dart';
 
 import '../base/task.dart';
 import '../interface/hyper_interface.dart';
@@ -35,6 +36,10 @@ class HyperDownload extends HyperInterface with Task {
     required DownloadTaskId downloadTaskId,
     required DownloadingLog downloadingLog,
   }) async {
+    final fileName = url.getDropLastWhile('/');
+    if (savePath.endsWith(Platform.pathSeparator)) {
+      savePath = '$savePath$fileName';
+    }
     HyperLog.log('startDownload');
     final f = File(savePath);
     if (f.existsSync()) {
