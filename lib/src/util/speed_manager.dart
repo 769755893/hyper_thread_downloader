@@ -51,6 +51,7 @@ class SpeedManager {
     speeds[index].cur = speeds[index].total;
     speeds[index].remainTime = 0;
     speeds[index].progress = 1;
+    speeds[index].downloadSpeed = 0;
   }
 
   void updateSpeed(int index, int count, int total) {
