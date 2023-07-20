@@ -18,10 +18,37 @@ class HyperDownload extends HyperInterface with Task {
   late Chunks chunks;
   final Dio dio = Dio();
   int total = 0;
+  int id = 0;
   MainThreadManager? _mainThreadManager;
   Completer? _prepare;
 
   Future? get prepareWork => _prepare?.future;
+
+  bool pass({
+    required String savePath,
+    required DownloadComplete downloadComplete,
+    required String url,
+    required DownloadFailed downloadFailed,
+    required DownloadTaskId downloadTaskId,
+  }) {
+    final f = File(savePath);
+    if (f.existsSync()) {
+      HyperLog.log('file exists download complete');
+      downloadComplete();
+      return false;
+    }
+    if (url.isEmpty) {
+      downloadFailed('download url is empty');
+      return false;
+    }
+    id = taskStart(url: url);
+    if (id == -1) {
+      downloadTaskId(id);
+      HyperLog.log('taskId -1 return: ${taskMap.values}');
+      return false;
+    }
+    return true;
+  }
 
   @override
   Future startDownload({
@@ -41,18 +68,13 @@ class HyperDownload extends HyperInterface with Task {
       savePath = '$savePath$fileName';
     }
     HyperLog.log('startDownload');
-    final f = File(savePath);
-    if (f.existsSync()) {
-      HyperLog.log('file exists download complete');
-      downloadComplete();
-      return;
-    }
-    final id = taskStart(url: url);
-    if (id == -1) {
-      downloadTaskId(id);
-      HyperLog.log('taskId -1 return: ${taskMap.values}');
-      return;
-    }
+    if (!pass(
+      savePath: savePath,
+      downloadComplete: downloadComplete,
+      url: url,
+      downloadFailed: downloadFailed,
+      downloadTaskId: downloadTaskId,
+    )) return;
     _mainThreadManager = MainThreadManager();
     _prepare = Completer();
     downloadTaskId(id);
