@@ -121,15 +121,29 @@ class HyperDownload extends HyperInterface with Task {
     required Function(Object e) fallback,
     int? fileSize,
   }) async {
-    total = fileSize ?? await fileLength(url: url, fallback: fallback);
+    Object tempFallback = '';
+
+    final ret = await fileLength(
+            url: url,
+            fallback: (e) {
+              tempFallback = e;
+            }) ??
+        fileSize;
+
+    if (ret == null) {
+      fallback(tempFallback);
+      return;
+    }
+
+    total = ret;
     chunks = Chunks(total: total, chunks: threadCount);
   }
 
-  Future<int> fileLength({
+  Future<int?> fileLength({
     required String url,
     required Function(Object e) fallback,
   }) async {
-    int ret = 0;
+    int? ret;
     await run(futureBlock: () async {
       final res = await dio.headUri(Uri.parse(url));
       ret = int.parse(res.headers.value(HttpHeaders.contentLengthHeader)!);
