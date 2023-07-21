@@ -39,7 +39,8 @@ class MainThreadManager with Task {
     required Completer? prepareCompleter,
     required WorkingMerge workingMerge,
   }) {
-    threadsStatus = List.generate(allChunks.length, (index) => ThreadStatus.downloading);
+    threadsStatus =
+        List.generate(allChunks.length, (index) => ThreadStatus.downloading);
     this.allChunks = allChunks;
     this.downloadComplete = downloadComplete;
     this.downloadingLog = downloadingLog;
@@ -53,9 +54,14 @@ class MainThreadManager with Task {
 
   void start() {
     prepareList = Map.fromIterables(
-        List.generate(allChunks.length, (index) => index), List.generate(allChunks.length, (index) => false));
+        List.generate(allChunks.length, (index) => index),
+        List.generate(allChunks.length, (index) => false));
     for (int i = 0; i < allChunks.length; i++) {
-      startChunk(index: i, url: downloadInfo.url, savePath: downloadInfo.savePath, chunk: allChunks[i]);
+      startChunk(
+          index: i,
+          url: downloadInfo.url,
+          savePath: downloadInfo.savePath,
+          chunk: allChunks[i]);
     }
   }
 
@@ -67,7 +73,12 @@ class MainThreadManager with Task {
   }) async {
     final ReceivePort receivePort = ReceivePort();
     handleSubThreadMessage(
-        receivePort: receivePort, i: index, url: url, savePath: savePath, chunk: chunk, index: index);
+        receivePort: receivePort,
+        i: index,
+        url: url,
+        savePath: savePath,
+        chunk: chunk,
+        index: index);
     await startThread(receivePort);
   }
 
@@ -107,7 +118,8 @@ class MainThreadManager with Task {
 
   Future cleanFailedFiles({String? endWidth}) async {
     try {
-      final baseFolder = downloadInfo.savePath.dropLastWhile(Platform.pathSeparator);
+      final baseFolder =
+          downloadInfo.savePath.dropLastWhile(Platform.pathSeparator);
       final dir = Directory(baseFolder);
       final entry = dir.listSync();
       for (final f in entry) {
@@ -124,7 +136,8 @@ class MainThreadManager with Task {
     } catch (_) {}
   }
 
-  Future pickAllChild({String reason = '', required ThreadStatus status}) async {
+  Future pickAllChild(
+      {String reason = '', required ThreadStatus status}) async {
     HyperLog.log(threadsStatus);
     if (allComplete()) {
       bool err = false;
@@ -155,7 +168,8 @@ class MainThreadManager with Task {
     }
 
     if (status != ThreadStatus.downloadFailed) {
-      bool existsWorking = threadsStatus.any((element) => element == ThreadStatus.working);
+      bool existsWorking =
+          threadsStatus.any((element) => element == ThreadStatus.working);
       if (existsWorking) return;
     }
 
@@ -173,10 +187,15 @@ class MainThreadManager with Task {
       await cleanFailedFiles(endWidth: '${index[i]}');
     }
     await Future.delayed(Duration(seconds: 1));
-    prepareList =
-        Map.fromIterables(List.generate(index.length, (i) => index[i]), List.generate(index.length, (index) => false));
+    prepareList = Map.fromIterables(
+        List.generate(index.length, (i) => index[i]),
+        List.generate(index.length, (index) => false));
     for (final i in index) {
-      startChunk(index: i, url: downloadInfo.url, savePath: downloadInfo.savePath, chunk: allChunks[i]);
+      startChunk(
+          index: i,
+          url: downloadInfo.url,
+          savePath: downloadInfo.savePath,
+          chunk: allChunks[i]);
     }
   }
 
@@ -212,7 +231,8 @@ class MainThreadManager with Task {
     final Completer completer = Completer();
     receivePort.listen((message) {
       if (message is SendPort) {
-        message.send({'savePath': downloadInfo.savePath, 'size': allChunks.length});
+        message.send(
+            {'savePath': downloadInfo.savePath, 'size': allChunks.length});
       } else if (message is Map) {
         final status = ThreadStatus.fromValue(message['status']);
         switch (status) {
@@ -250,9 +270,13 @@ class MainThreadManager with Task {
       final threadManager = SubThreadManager();
       subPort.listen((message) async {
         if (message is Map) {
-          await handleMainIsolate(threadManager: threadManager, message: message, sendPort: sendPort);
+          await handleMainIsolate(
+              threadManager: threadManager,
+              message: message,
+              sendPort: sendPort);
         } else if (message is String) {
-          handleMainIsolateControl(threadManager: threadManager, message: message);
+          handleMainIsolateControl(
+              threadManager: threadManager, message: message);
         }
       });
       sendPort.send(subPort.sendPort);
@@ -286,7 +310,12 @@ class MainThreadManager with Task {
     receivePort.listen((message) {
       if (message is SendPort) {
         ports[index] = message;
-        sendStartMessage(subPort: message, index: i, url: url, savePath: savePath, chunk: chunk);
+        sendStartMessage(
+            subPort: message,
+            index: i,
+            url: url,
+            savePath: savePath,
+            chunk: chunk);
         return;
       }
       if (message is Map) {

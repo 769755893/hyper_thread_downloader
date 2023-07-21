@@ -11,7 +11,8 @@ import '../util/log_util.dart';
 
 /// note that the thread start entry must be global static.
 
-void handleMainIsolateControl({required SubThreadManager threadManager, required String message}) {
+void handleMainIsolateControl(
+    {required SubThreadManager threadManager, required String message}) {
   if (message == 'stop') {
     threadManager.stopDownload();
   }
@@ -37,10 +38,14 @@ Future handleMainIsolate({
   );
 }
 
-Future mergeThreadFunc({required String savePath, required int size, required SendPort sendPort}) async {
+Future mergeThreadFunc(
+    {required String savePath,
+    required int size,
+    required SendPort sendPort}) async {
   List<Completer> completers = List.generate(size, (index) => Completer());
   try {
-    final ioSink = File('$savePath.0').openWrite(mode: FileMode.writeOnlyAppend);
+    final ioSink =
+        File('$savePath.0').openWrite(mode: FileMode.writeOnlyAppend);
     for (int i = 1; i < size; i++) {
       final t = File('$savePath.$i');
       await ioSink.addStream(t.openRead());
@@ -59,7 +64,7 @@ Future mergeThreadFunc({required String savePath, required int size, required Se
       'value': msg,
     });
   }
-  for(int i = 1;i<completers.length;i++) {
+  for (int i = 1; i < completers.length; i++) {
     await completers[i].future;
   }
   Isolate.exit(sendPort, {'status': ThreadStatus.downloadComplete.value});
@@ -68,12 +73,16 @@ Future mergeThreadFunc({required String savePath, required int size, required Se
 bool pathContainsFile(String basePath) {
   final dir = Directory(basePath);
   if (!dir.existsSync()) return false;
-  final entry = dir.listSync().map((e) => e.path.endWithNumber()).where((element) => element);
+  final entry = dir
+      .listSync()
+      .map((e) => e.path.endWithNumber())
+      .where((element) => element);
   HyperLog.log('check path contains length: ${entry.length}');
   return entry.length > 1;
 }
 
-Future mergeMultiThread({required String savePath, required SendPort sendPort}) async {
+Future mergeMultiThread(
+    {required String savePath, required SendPort sendPort}) async {
   final basePath = savePath.dropLastWhile(Platform.pathSeparator);
   while (pathContainsFile(basePath)) {
     final List<MergeBlock> blocks = findBlocks(basePath);
@@ -117,6 +126,7 @@ List<String> findPath(String basePath) {
       path.add(p);
     }
   }
-  path.sort((a, b) => int.parse(a.split('.').last).compareTo(int.parse(b.split('.').last)));
+  path.sort((a, b) =>
+      int.parse(a.split('.').last).compareTo(int.parse(b.split('.').last)));
   return path;
 }

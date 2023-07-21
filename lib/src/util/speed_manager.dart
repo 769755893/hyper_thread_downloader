@@ -15,19 +15,30 @@ class Speed {
 }
 
 extension SpeedExt on List<Speed> {
-  double get progress => fold(0, (previousValue, element) => previousValue + element.progress / length.toDouble());
+  double get progress => fold(
+      0,
+      (previousValue, element) =>
+          previousValue + element.progress / length.toDouble());
 
-  double get downloadSpeed => fold(0, (previousValue, element) => previousValue + element.downloadSpeed);
+  double get downloadSpeed => fold(
+      0, (previousValue, element) => previousValue + element.downloadSpeed);
 
-  double get remainTime => fold(0, (previousValue, element) => previousValue + element.remainTime / length.toDouble());
+  double get remainTime => fold(
+      0,
+      (previousValue, element) =>
+          previousValue + element.remainTime / length.toDouble());
 
-  int get lastCalculateCount => fold(0, (previousValue, element) => previousValue + element.lastCalculateCount);
+  int get lastCalculateCount => fold(0,
+      (previousValue, element) => previousValue + element.lastCalculateCount);
 
-  int get lastClock => fold(0, (previousValue, element) => previousValue + element.lastClock);
+  int get lastClock =>
+      fold(0, (previousValue, element) => previousValue + element.lastClock);
 
-  int get cur => fold(0, (previousValue, element) => previousValue + element.cur);
+  int get cur =>
+      fold(0, (previousValue, element) => previousValue + element.cur);
 
-  int get total => fold(0, (previousValue, element) => previousValue + element.total);
+  int get total =>
+      fold(0, (previousValue, element) => previousValue + element.total);
 }
 
 class SpeedManager {
@@ -58,14 +69,17 @@ class SpeedManager {
     double progress = count.toDouble() / total.toDouble();
     int recordClock = clock;
     if (speeds[index].downloadSpeed <= 0) {
-      speeds[index].downloadSpeed = (count - speeds[index].lastCalculateCount).toDouble() /
-          (recordClock - speeds[index].lastClock).toDouble() *
-          clockStep;
+      speeds[index].downloadSpeed =
+          (count - speeds[index].lastCalculateCount).toDouble() /
+              (recordClock - speeds[index].lastClock).toDouble() *
+              clockStep;
     } else {
       int diff = recordClock - speeds[index].lastClock;
       if (diff > 2 * clockStep) {
         speeds[index].downloadSpeed =
-            (count - speeds[index].lastCalculateCount).toDouble() / diff.toDouble() * clockStep;
+            (count - speeds[index].lastCalculateCount).toDouble() /
+                diff.toDouble() *
+                clockStep;
         speeds[index].lastClock = recordClock;
         speeds[index].lastCalculateCount = count;
       }
@@ -74,7 +88,8 @@ class SpeedManager {
     if (speeds[index].downloadSpeed <= 0) {
       speeds[index].downloadSpeed = 1;
     }
-    speeds[index].remainTime = remainBytes.toDouble() / speeds[index].downloadSpeed;
+    speeds[index].remainTime =
+        remainBytes.toDouble() / speeds[index].downloadSpeed;
     speeds[index].progress = progress;
     speeds[index].cur = count;
     speeds[index].total = total;
@@ -90,7 +105,8 @@ class SpeedManager {
     downloadSpeedProgress(
       progress: speeds.progress,
       speed: speeds.downloadSpeed,
-      remainTime: getLeftHour(speeds.remainTime) > 24 ? 3600 * 24 : speeds.remainTime,
+      remainTime:
+          getLeftHour(speeds.remainTime) > 24 ? 3600 * 24 : speeds.remainTime,
       count: speeds.cur,
       total: total,
     );

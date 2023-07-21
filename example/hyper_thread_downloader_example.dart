@@ -11,7 +11,8 @@ void main() async {
       'https://updates.cdn-apple.com/2023WinterFCS/fullrestores/032-73564/23D75440-B300-4932-8BD7-283C6218FF4E/iPhone_4.7_15.7.6_19H349_Restore.ipsw';
   await md.startDownload(
       url: url,
-      savePath: '/Users/cj/Desktop/cache/${url.getDropLastWhile(Platform.pathSeparator)}',
+      savePath:
+          '/Users/cj/Desktop/cache/${url.getDropLastWhile(Platform.pathSeparator)}',
       threadCount: Platform.numberOfProcessors,
       fileSize: 5000000,
       downloadProgress: ({

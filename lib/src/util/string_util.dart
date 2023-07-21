@@ -98,7 +98,8 @@ extension StringExt on String {
   }
 }
 
-String formatFileSize(fileSize, {int position = 2, int scale = 1024, int specified = -1}) {
+String formatFileSize(fileSize,
+    {int position = 2, int scale = 1024, int specified = -1}) {
   try {
     double num = 0;
     List sizeUnit = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'YB'];
@@ -119,7 +120,8 @@ String formatFileSize(fileSize, {int position = 2, int scale = 1024, int specifi
       return '$numStr ${sizeUnit[unit]}';
     }
   } catch (e) {
-    HyperLog.log('formatFileSize error:$fileSize, $position, $scale, $specified, with error: $e');
+    HyperLog.log(
+        'formatFileSize error:$fileSize, $position, $scale, $specified, with error: $e');
   }
   return '0 B';
 }

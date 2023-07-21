@@ -3,6 +3,7 @@ enum HyperLogLevel {
   close,
   all,
 }
+
 class HyperLog {
   HyperLog._internal();
 

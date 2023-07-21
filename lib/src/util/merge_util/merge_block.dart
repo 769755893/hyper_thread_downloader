@@ -62,7 +62,9 @@ class MergeThread {
       final subPort = ReceivePort();
       subPort.listen((subMessage) {
         if (subMessage is Map) {
-          final block = MergeBlock(sourcePath: subMessage['sourcePath'], targetPath: subMessage['targetPath']);
+          final block = MergeBlock(
+              sourcePath: subMessage['sourcePath'],
+              targetPath: subMessage['targetPath']);
           final index = subMessage['index'];
           startMerge(block, port, index);
         }
@@ -129,7 +131,8 @@ Future startMerge(MergeBlock block, SendPort port, int index) async {
     });
     return;
   }
-  HyperLog.log('start MergeThread:\nindex: $index, source: ${block.sourcePath} - target: ${block.targetPath}');
+  HyperLog.log(
+      'start MergeThread:\nindex: $index, source: ${block.sourcePath} - target: ${block.targetPath}');
   final ioSink = sourceFile.openWrite(mode: FileMode.writeOnlyAppend);
   HyperLog.log('index: $index,open write done');
   await ioSink.addStream(targetFile.openRead());

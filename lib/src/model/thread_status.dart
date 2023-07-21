@@ -8,5 +8,6 @@ enum ThreadStatus {
 
   final int value;
 
-  static ThreadStatus fromValue(int v) => ThreadStatus.values.firstWhere((element) => element.value == v);
+  static ThreadStatus fromValue(int v) =>
+      ThreadStatus.values.firstWhere((element) => element.value == v);
 }

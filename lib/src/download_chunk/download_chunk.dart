@@ -23,7 +23,8 @@ class PartDownload with Task {
 
   String get partPartialFileName => '$savePath$partialExtension.$index';
 
-  String get partTempFileName => '$savePath$partialExtension$tempExtension.$index';
+  String get partTempFileName =>
+      '$savePath$partialExtension$tempExtension.$index';
 
   String get partFileName => '$savePath.$index';
 
@@ -113,7 +114,7 @@ class PartDownload with Task {
 
   Future startDownload() async {
     _sendStatus(ThreadStatus.working);
-    dio = Dio()..options = BaseOptions(connectTimeout: 5000);
+    dio = Dio()..options = BaseOptions(connectTimeout: Duration(seconds: 5));
     cancelToken = CancelToken();
     bool error = false;
     PrepareStatus status = await downloadPrepare(fallback: (e) {
@@ -123,7 +124,8 @@ class PartDownload with Task {
     if (error) return;
     switch (status) {
       case PrepareStatus.partDone:
-        HyperLog.log('find complete sub part, sub thread: $index download complete');
+        HyperLog.log(
+            'find complete sub part, sub thread: $index download complete');
         _downloadComplete();
         break;
       case PrepareStatus.partialExists:
@@ -137,7 +139,9 @@ class PartDownload with Task {
               cur: cur + partialFileLength,
               total: total + partialFileLength,
             ),
-            options: Options(headers: {HttpHeaders.rangeHeader: 'bytes=${start + partialFileLength}-$end'}),
+            options: Options(headers: {
+              HttpHeaders.rangeHeader: 'bytes=${start + partialFileLength}-$end'
+            }),
             cancelToken: cancelToken,
             deleteOnError: false,
           );
@@ -188,7 +192,9 @@ class PartDownload with Task {
     }
   }
 
-  Future<PrepareStatus> downloadPrepare({required DownloadFailed fallback}) async {
+  Future<PrepareStatus> downloadPrepare({
+    required DownloadFailed fallback,
+  }) async {
     final partDoneFile = File(partFileName);
     if (partDoneFile.existsSync()) return PrepareStatus.partDone;
     final tempFile = File(partTempFileName);
