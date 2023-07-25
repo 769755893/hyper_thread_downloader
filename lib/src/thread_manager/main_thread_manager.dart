@@ -355,7 +355,8 @@ class MainThreadManager with Task {
 
   bool initPrepare = true;
 
-  void mapToSpeed(Map message, int index) {
+  void mapToSpeed(dynamic message, int index) {
+    if (message is! Map) return;
     if (initPrepare) {
       prepareList[index] = true;
       checkAllPrepare();
