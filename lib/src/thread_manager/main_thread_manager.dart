@@ -68,12 +68,7 @@ class MainThreadManager with Task {
   }) async {
     final ReceivePort receivePort = ReceivePort();
     handleSubThreadMessage(
-        receivePort: receivePort,
-        i: index,
-        url: url,
-        savePath: savePath,
-        chunk: chunk,
-        index: index);
+        receivePort: receivePort, i: index, url: url, savePath: savePath, chunk: chunk, index: index);
     await startThread(receivePort);
   }
 
@@ -183,6 +178,7 @@ class MainThreadManager with Task {
       HyperLog.log('all thread failed');
       await cleanFailedFiles();
       cancelCompleter?.complete();
+      prepareCompleter?.complete();
       downloadFailed('subThread all failed with reason: $reason');
       return;
     }
@@ -327,11 +323,7 @@ class MainThreadManager with Task {
     receivePort.listen((message) {
       if (message is SendPort) {
         ports[index] = message;
-        sendStartMessage(subPort: message,
-            index: i,
-            url: url,
-            savePath: savePath,
-            chunk: chunk);
+        sendStartMessage(subPort: message, index: i, url: url, savePath: savePath, chunk: chunk);
         return;
       }
       if (message is Map) {
