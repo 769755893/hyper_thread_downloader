@@ -19,12 +19,12 @@ class MainThreadManager with Task {
   late DownloadingLog downloadingLog;
   late DownloadComplete downloadComplete;
   late SpeedManager speedManager;
-  late List<ThreadStatus> threadsStatus;
   late Completer? prepareCompleter;
   late Completer? cancelCompleter;
   late List<Chunk> allChunks;
   late DownloadInfo downloadInfo;
   late WorkingMerge workingMerge;
+  Map<int, ThreadStatus> threadsStatus = {};
   Map<int, SendPort> ports = {};
   Map prepareList = {};
 
@@ -39,7 +39,8 @@ class MainThreadManager with Task {
     required Completer? cancelCompleter,
     required WorkingMerge workingMerge,
   }) {
-    threadsStatus = List.generate(allChunks.length, (index) => ThreadStatus.downloading);
+    threadsStatus = Map.fromIterables(List.generate(allChunks.length, (index) => index),
+        List.generate(allChunks.length, (index) => ThreadStatus.downloading));
     this.allChunks = allChunks;
     this.downloadComplete = downloadComplete;
     this.downloadingLog = downloadingLog;
@@ -67,7 +68,12 @@ class MainThreadManager with Task {
   }) async {
     final ReceivePort receivePort = ReceivePort();
     handleSubThreadMessage(
-        receivePort: receivePort, i: index, url: url, savePath: savePath, chunk: chunk, index: index);
+        receivePort: receivePort,
+        i: index,
+        url: url,
+        savePath: savePath,
+        chunk: chunk,
+        index: index);
     await startThread(receivePort);
   }
 
@@ -91,7 +97,7 @@ class MainThreadManager with Task {
 
   bool allComplete() {
     bool ret = true;
-    for (final t in threadsStatus) {
+    for (final t in threadsStatus.values) {
       if (t != ThreadStatus.downloadComplete) {
         ret = false;
         break;
@@ -102,8 +108,8 @@ class MainThreadManager with Task {
 
   bool allCancel() {
     bool ret = true;
-    for (final t in threadsStatus) {
-      if (t != ThreadStatus.downloadCancel) {
+    for (final t in threadsStatus.values) {
+      if (t == ThreadStatus.downloading) {
         ret = false;
         break;
       }
@@ -113,7 +119,7 @@ class MainThreadManager with Task {
 
   bool allFailed() {
     bool ret = true;
-    for (final t in threadsStatus) {
+    for (final t in threadsStatus.values) {
       if (t != ThreadStatus.downloadFailed) {
         ret = false;
         break;
@@ -178,7 +184,7 @@ class MainThreadManager with Task {
 
     /// current thread merging etc.
     if (status != ThreadStatus.downloadFailed) {
-      bool existsWorking = threadsStatus.any((element) => element != ThreadStatus.downloadFailed);
+      bool existsWorking = threadsStatus.values.any((element) => element != ThreadStatus.downloadFailed);
       if (existsWorking) return;
     }
 
@@ -205,8 +211,12 @@ class MainThreadManager with Task {
   }
 
   void stopAllThread() {
-    for (final port in ports.values) {
-      port.send('stop');
+    for (final port in ports.entries) {
+      final i = port.key;
+      final p = port.value;
+      if (threadsStatus[i] == ThreadStatus.downloading) {
+        p.send('stop');
+      }
     }
   }
 
@@ -310,7 +320,11 @@ class MainThreadManager with Task {
     receivePort.listen((message) {
       if (message is SendPort) {
         ports[index] = message;
-        sendStartMessage(subPort: message, index: i, url: url, savePath: savePath, chunk: chunk);
+        sendStartMessage(subPort: message,
+            index: i,
+            url: url,
+            savePath: savePath,
+            chunk: chunk);
         return;
       }
       if (message is Map) {
