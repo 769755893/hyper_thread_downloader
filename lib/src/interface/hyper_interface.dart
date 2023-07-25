@@ -29,6 +29,32 @@ abstract class HyperInterface {
 
   void stopDownload({required int id});
 
+  Future<bool> chunksInit({
+    required String url,
+    required int threadCount,
+    required DownloadFailed downloadFailed,
+    required int? fileSize,
+  });
+
+  Future setupWaiting(PrepareWorking prepareWorking);
+
+  void start({
+    required DownloadSpeedProgress downloadProgress,
+    required DownloadFailed downloadFailed,
+    required DownloadComplete downloadComplete,
+    required String url,
+    required String savePath,
+    required WorkingMerge workingMerge,
+    required DownloadingLog downloadingLog,
+  });
+
+  Future chunkSizeInit({
+    required String url,
+    required int threadCount,
+    required Function(Object e) fallback,
+    int? fileSize,
+  });
+
   Map taskMap = {};
   int taskId = 0;
 

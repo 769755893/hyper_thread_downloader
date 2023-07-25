@@ -50,9 +50,11 @@ class HyperDownload extends HyperInterface with Task {
       HyperLog.log('taskId -1 return: ${taskMap.values}');
       return false;
     }
+    downloadTaskId(id);
     return true;
   }
 
+  @override
   Future setupWaiting(PrepareWorking prepareWorking) async {
     prepareWorking(true);
     if (_prepareCompleter?.isCompleted == false) {
@@ -67,6 +69,27 @@ class HyperDownload extends HyperInterface with Task {
     _prepareCompleter?.future.then((value) {
       prepareWorking(false);
     });
+  }
+
+  @override
+  Future<bool> chunksInit({
+    required String url,
+    required int threadCount,
+    required DownloadFailed downloadFailed,
+    required int? fileSize,
+  }) async {
+    bool ret = true;
+    await chunkSizeInit(
+      url: url,
+      threadCount: threadCount,
+      fallback: (Object e) {
+        _prepareCompleter?.complete();
+        downloadFailed('chunk init failed with: $e');
+        ret = false;
+      },
+      fileSize: fileSize,
+    );
+    return ret;
   }
 
   @override
@@ -96,20 +119,30 @@ class HyperDownload extends HyperInterface with Task {
       downloadTaskId: downloadTaskId,
     )) return;
     await setupWaiting(prepareWorking);
-    downloadTaskId(id);
-    bool chunkFailed = false;
-    await initChunk(
+    if (await (chunksInit(url: url, threadCount: threadCount, downloadFailed: downloadFailed, fileSize: fileSize))) {
+      return;
+    }
+    start(
+      downloadProgress: downloadProgress,
+      downloadFailed: downloadFailed,
+      downloadComplete: downloadComplete,
       url: url,
-      threadCount: threadCount,
-      fallback: (Object e) {
-        _prepareCompleter?.complete();
-        downloadFailed('chunk init failed with: $e');
-        chunkFailed = true;
-      },
-      fileSize: fileSize,
+      savePath: savePath,
+      workingMerge: workingMerge,
+      downloadingLog: downloadingLog,
     );
-    if (chunkFailed) return;
+  }
 
+  @override
+  void start({
+    required DownloadSpeedProgress downloadProgress,
+    required DownloadFailed downloadFailed,
+    required DownloadComplete downloadComplete,
+    required String url,
+    required String savePath,
+    required WorkingMerge workingMerge,
+    required DownloadingLog downloadingLog,
+  }) {
     final allChunks = chunks.allChunks;
     final speedManager = SpeedManager(
       chunks: allChunks,
@@ -134,7 +167,8 @@ class HyperDownload extends HyperInterface with Task {
     _mainThreadManager?.start();
   }
 
-  Future initChunk({
+  @override
+  Future chunkSizeInit({
     required String url,
     required int threadCount,
     required Function(Object e) fallback,
