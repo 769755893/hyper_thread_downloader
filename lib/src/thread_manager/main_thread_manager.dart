@@ -181,7 +181,7 @@ class MainThreadManager with Task {
 
     if (allFailed()) {
       HyperLog.log('all thread failed');
-      // await cleanFailedFiles();
+      await cleanFailedFiles();
       cancelCompleter?.complete();
       downloadFailed('subThread all failed with reason: $reason');
       return;
