@@ -69,7 +69,6 @@ class PartDownload with Task {
   }
 
   void sendStatus({required ThreadStatus status, required bool exit, dynamic basicType}) {
-    HyperLog.log('subThread: $index, sendStatus');
     if (exit) {
       Isolate.exit(sendPort, {'status': status.value, 'index': index, 'value': basicType});
     }

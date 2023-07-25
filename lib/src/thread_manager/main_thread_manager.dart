@@ -77,10 +77,10 @@ class MainThreadManager with Task {
     pickAllChild(status: ThreadStatus.downloadComplete);
   }
 
-  void subFailed({required int index, required String reason}) {
+  void subFailed({required ThreadStatus failedStatus, required int index, required String reason}) {
     HyperLog.log('sub thread: $index failed with $reason');
-    threadsStatus[index] = ThreadStatus.downloadFailed;
-    pickAllChild(reason: reason, status: ThreadStatus.downloadFailed);
+    threadsStatus[index] = failedStatus;
+    pickAllChild(reason: reason, status: failedStatus);
   }
 
   void subCancel(int index, value) {
@@ -324,12 +324,14 @@ class MainThreadManager with Task {
           case ThreadStatus.merging:
             break;
           case ThreadStatus.mergeFailed:
-            subFailed(index: index, reason: value ?? '');
+            downloadingLog('sub thread failed, may rebooting except socket, reason: $value');
+            subFailed(failedStatus: status, index: index, reason: value ?? '');
             break;
           case ThreadStatus.rename:
             break;
           case ThreadStatus.renameFailed:
-            subFailed(index: index, reason: value ?? '');
+            downloadingLog('sub thread failed, may rebooting except socket, reason: $value');
+            subFailed(failedStatus: status, index: index, reason: value ?? '');
             break;
           case ThreadStatus.downloadCancel:
             subCancel(index, value);
@@ -340,7 +342,7 @@ class MainThreadManager with Task {
             speedManager.updateChunkComplete(index);
             break;
           case ThreadStatus.downloadFailed:
-            subFailed(index: index, reason: value ?? '');
+            subFailed(failedStatus: status, index: index, reason: value ?? '');
             downloadingLog('sub thread failed, may rebooting except socket, reason: $value');
             ports.remove(index);
             break;
