@@ -319,7 +319,7 @@ class MainThreadManager with Task {
         final value = message['value'];
         switch (status) {
           case ThreadStatus.downloading:
-            mapToSpeed(message, index);
+            mapToSpeed(value, index);
             break;
           case ThreadStatus.merging:
             break;
