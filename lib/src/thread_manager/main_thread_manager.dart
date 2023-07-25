@@ -159,7 +159,7 @@ class MainThreadManager with Task {
       cancelCompleter?.complete();
       return;
     }
-    HyperLog.log(threadsStatus);
+    HyperLog.log('all thread status: ${threadsStatus.entries.toString()}');
     if (allComplete()) {
       bool err = false;
       workingMerge(false);
@@ -185,6 +185,8 @@ class MainThreadManager with Task {
       downloadFailed('subThread all failed with reason: $reason');
       return;
     }
+
+    HyperLog.log('did not all failed, start to check other, ${threadsStatus.values}');
 
     /// current thread merging etc.
     if (status != ThreadStatus.downloadFailed) {
