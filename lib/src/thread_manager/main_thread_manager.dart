@@ -155,7 +155,7 @@ class MainThreadManager with Task {
     String reason = '',
     required ThreadStatus status,
   }) async {
-    if (allCancel() && !allFailed()) {
+    if (allCancel() && !allFailed() && !allComplete()) {
       cancelCompleter?.complete();
       return;
     }
