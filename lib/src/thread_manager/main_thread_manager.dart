@@ -155,7 +155,7 @@ class MainThreadManager with Task {
     String reason = '',
     required ThreadStatus status,
   }) async {
-    if (allCancel()) {
+    if (allCancel() && !allFailed()) {
       cancelCompleter?.complete();
       return;
     }
@@ -182,6 +182,7 @@ class MainThreadManager with Task {
     if (allFailed()) {
       HyperLog.log('all thread failed');
       // await cleanFailedFiles();
+      cancelCompleter?.complete();
       downloadFailed('subThread all failed with reason: $reason');
       return;
     }
