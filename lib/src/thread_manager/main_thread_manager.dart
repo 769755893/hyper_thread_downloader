@@ -119,8 +119,12 @@ class MainThreadManager with Task {
 
   bool allFailed() {
     bool ret = true;
-    for (final t in threadsStatus.values) {
+
+    for (final e in threadsStatus.entries) {
+      final i = e.key;
+      final t = e.value;
       if (t != ThreadStatus.downloadFailed) {
+        HyperLog.log('check all failed not true: index: $i, status: $t');
         ret = false;
         break;
       }
@@ -176,8 +180,8 @@ class MainThreadManager with Task {
     }
 
     if (allFailed()) {
-      HyperLog.log('all failed start clean files');
-      await cleanFailedFiles();
+      HyperLog.log('all thread failed');
+      // await cleanFailedFiles();
       downloadFailed('subThread all failed with reason: $reason');
       return;
     }
@@ -189,7 +193,7 @@ class MainThreadManager with Task {
     }
 
     /// socket exception will do not reboot.
-    if (reason.toLowerCase().contains('socket')) return;
+    if (reason.contains('SocketException')) return;
 
     /// part failed.
     List<int> failedIndex = findFailedThread();
