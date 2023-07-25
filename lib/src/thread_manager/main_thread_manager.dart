@@ -20,8 +20,8 @@ class MainThreadManager with Task {
   late DownloadComplete downloadComplete;
   late SpeedManager speedManager;
   late List<ThreadStatus> threadsStatus;
-  late Completer completer;
   late Completer? prepareCompleter;
+  late Completer? cancelCompleter;
   late List<Chunk> allChunks;
   late DownloadInfo downloadInfo;
   late WorkingMerge workingMerge;
@@ -34,34 +34,28 @@ class MainThreadManager with Task {
     required DownloadFailed downloadFailed,
     required DownloadingLog downloadingLog,
     required SpeedManager speedManager,
-    required Completer completer,
     required DownloadInfo downloadInfo,
     required Completer? prepareCompleter,
+    required Completer? cancelCompleter,
     required WorkingMerge workingMerge,
   }) {
-    threadsStatus =
-        List.generate(allChunks.length, (index) => ThreadStatus.downloading);
+    threadsStatus = List.generate(allChunks.length, (index) => ThreadStatus.downloading);
     this.allChunks = allChunks;
     this.downloadComplete = downloadComplete;
     this.downloadingLog = downloadingLog;
     this.downloadFailed = downloadFailed;
     this.speedManager = speedManager;
-    this.completer = completer;
-    this.downloadInfo = downloadInfo;
+    this.cancelCompleter = cancelCompleter;
     this.prepareCompleter = prepareCompleter;
+    this.downloadInfo = downloadInfo;
     this.workingMerge = workingMerge;
   }
 
   void start() {
     prepareList = Map.fromIterables(
-        List.generate(allChunks.length, (index) => index),
-        List.generate(allChunks.length, (index) => false));
+        List.generate(allChunks.length, (index) => index), List.generate(allChunks.length, (index) => false));
     for (int i = 0; i < allChunks.length; i++) {
-      startChunk(
-          index: i,
-          url: downloadInfo.url,
-          savePath: downloadInfo.savePath,
-          chunk: allChunks[i]);
+      startChunk(index: i, url: downloadInfo.url, savePath: downloadInfo.savePath, chunk: allChunks[i]);
     }
   }
 
@@ -73,12 +67,7 @@ class MainThreadManager with Task {
   }) async {
     final ReceivePort receivePort = ReceivePort();
     handleSubThreadMessage(
-        receivePort: receivePort,
-        i: index,
-        url: url,
-        savePath: savePath,
-        chunk: chunk,
-        index: index);
+        receivePort: receivePort, i: index, url: url, savePath: savePath, chunk: chunk, index: index);
     await startThread(receivePort);
   }
 
@@ -94,10 +83,27 @@ class MainThreadManager with Task {
     pickAllChild(reason: reason, status: ThreadStatus.downloadFailed);
   }
 
+  void subCancel(int index, value) {
+    HyperLog.log('$value');
+    threadsStatus[index] = ThreadStatus.downloadCancel;
+    pickAllChild(status: ThreadStatus.downloadCancel);
+  }
+
   bool allComplete() {
     bool ret = true;
     for (final t in threadsStatus) {
       if (t != ThreadStatus.downloadComplete) {
+        ret = false;
+        break;
+      }
+    }
+    return ret;
+  }
+
+  bool allCancel() {
+    bool ret = true;
+    for (final t in threadsStatus) {
+      if (t != ThreadStatus.downloadCancel) {
         ret = false;
         break;
       }
@@ -118,8 +124,7 @@ class MainThreadManager with Task {
 
   Future cleanFailedFiles({String? endWidth}) async {
     try {
-      final baseFolder =
-          downloadInfo.savePath.dropLastWhile(Platform.pathSeparator);
+      final baseFolder = downloadInfo.savePath.dropLastWhile(Platform.pathSeparator);
       final dir = Directory(baseFolder);
       final entry = dir.listSync();
       for (final f in entry) {
@@ -136,8 +141,14 @@ class MainThreadManager with Task {
     } catch (_) {}
   }
 
-  Future pickAllChild(
-      {String reason = '', required ThreadStatus status}) async {
+  Future pickAllChild({
+    String reason = '',
+    required ThreadStatus status,
+  }) async {
+    if (allCancel()) {
+      cancelCompleter?.complete();
+      return;
+    }
     HyperLog.log(threadsStatus);
     if (allComplete()) {
       bool err = false;
@@ -155,7 +166,6 @@ class MainThreadManager with Task {
         HyperLog.log('download complete');
         downloadComplete();
       }
-      completer.complete();
       return;
     }
 
@@ -163,17 +173,17 @@ class MainThreadManager with Task {
       HyperLog.log('all failed start clean files');
       await cleanFailedFiles();
       downloadFailed('subThread all failed with reason: $reason');
-      completer.complete();
       return;
     }
 
+    /// current thread merging etc.
     if (status != ThreadStatus.downloadFailed) {
-      bool existsWorking =
-          threadsStatus.any((element) => element == ThreadStatus.working);
+      bool existsWorking = threadsStatus.any((element) => element != ThreadStatus.downloadFailed);
       if (existsWorking) return;
     }
 
-    if (reason.contains('SocketException')) return;
+    /// socket exception will do not reboot.
+    if (reason.toLowerCase().contains('socket')) return;
 
     /// part failed.
     List<int> failedIndex = findFailedThread();
@@ -187,15 +197,10 @@ class MainThreadManager with Task {
       await cleanFailedFiles(endWidth: '${index[i]}');
     }
     await Future.delayed(Duration(seconds: 1));
-    prepareList = Map.fromIterables(
-        List.generate(index.length, (i) => index[i]),
-        List.generate(index.length, (index) => false));
+    prepareList =
+        Map.fromIterables(List.generate(index.length, (i) => index[i]), List.generate(index.length, (index) => false));
     for (final i in index) {
-      startChunk(
-          index: i,
-          url: downloadInfo.url,
-          savePath: downloadInfo.savePath,
-          chunk: allChunks[i]);
+      startChunk(index: i, url: downloadInfo.url, savePath: downloadInfo.savePath, chunk: allChunks[i]);
     }
   }
 
@@ -210,7 +215,7 @@ class MainThreadManager with Task {
     for (int i = 0; i < threadsStatus.length; i++) {
       if (threadsStatus[i] == ThreadStatus.downloadFailed) {
         ret.add(i);
-        threadsStatus[i] = ThreadStatus.working;
+        threadsStatus[i] = ThreadStatus.downloading;
       }
     }
     return ret;
@@ -231,8 +236,7 @@ class MainThreadManager with Task {
     final Completer completer = Completer();
     receivePort.listen((message) {
       if (message is SendPort) {
-        message.send(
-            {'savePath': downloadInfo.savePath, 'size': allChunks.length});
+        message.send({'savePath': downloadInfo.savePath, 'size': allChunks.length});
       } else if (message is Map) {
         final status = ThreadStatus.fromValue(message['status']);
         switch (status) {
@@ -270,13 +274,9 @@ class MainThreadManager with Task {
       final threadManager = SubThreadManager();
       subPort.listen((message) async {
         if (message is Map) {
-          await handleMainIsolate(
-              threadManager: threadManager,
-              message: message,
-              sendPort: sendPort);
+          await handleMainIsolate(threadManager: threadManager, message: message, sendPort: sendPort);
         } else if (message is String) {
-          handleMainIsolateControl(
-              threadManager: threadManager, message: message);
+          handleMainIsolateControl(threadManager: threadManager, message: message);
         }
       });
       sendPort.send(subPort.sendPort);
@@ -310,12 +310,7 @@ class MainThreadManager with Task {
     receivePort.listen((message) {
       if (message is SendPort) {
         ports[index] = message;
-        sendStartMessage(
-            subPort: message,
-            index: i,
-            url: url,
-            savePath: savePath,
-            chunk: chunk);
+        sendStartMessage(subPort: message, index: i, url: url, savePath: savePath, chunk: chunk);
         return;
       }
       if (message is Map) {
@@ -326,7 +321,18 @@ class MainThreadManager with Task {
           case ThreadStatus.downloading:
             mapToSpeed(message, index);
             break;
-          case ThreadStatus.working:
+          case ThreadStatus.merging:
+            break;
+          case ThreadStatus.mergeFailed:
+            subFailed(index: index, reason: value ?? '');
+            break;
+          case ThreadStatus.rename:
+            break;
+          case ThreadStatus.renameFailed:
+            subFailed(index: index, reason: value ?? '');
+            break;
+          case ThreadStatus.downloadCancel:
+            subCancel(index, value);
             break;
           case ThreadStatus.downloadComplete:
             subComplete(index);
@@ -335,7 +341,7 @@ class MainThreadManager with Task {
             break;
           case ThreadStatus.downloadFailed:
             subFailed(index: index, reason: value ?? '');
-            downloadingLog('sub thread failed, rebooting, reason: $value');
+            downloadingLog('sub thread failed, may rebooting except socket, reason: $value');
             ports.remove(index);
             break;
           default:
@@ -346,6 +352,7 @@ class MainThreadManager with Task {
   }
 
   bool initPrepare = true;
+
   void mapToSpeed(Map message, int index) {
     if (initPrepare) {
       prepareList[index] = true;

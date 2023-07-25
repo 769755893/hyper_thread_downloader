@@ -26,7 +26,8 @@ void main() async {
         taskId = id;
       },
       workingMerge: (bool ret) {},
-      downloadingLog: (String log) {});
+      downloadingLog: (String log) {},
+      prepareWorking: (bool value) {});
 
   stdin.listen(
     (event) {
@@ -53,6 +54,7 @@ void main() async {
           },
           workingMerge: (bool ret) {},
           downloadingLog: (String log) {},
+          prepareWorking: (bool value) {},
         );
       }
     },

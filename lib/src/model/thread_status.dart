@@ -2,7 +2,12 @@ enum ThreadStatus {
   downloading(0),
   downloadFailed(1),
   downloadComplete(2),
-  working(3);
+  downloadCancel(3),
+  merging(4),
+  mergeFailed(5),
+  rename(6),
+  renameFailed(7),
+  ;
 
   const ThreadStatus(this.value);
 

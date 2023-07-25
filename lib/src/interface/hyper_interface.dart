@@ -5,17 +5,20 @@ typedef DownloadSpeedProgress = void Function({
   required int count,
   required int total,
 });
+
 typedef DownloadComplete = void Function();
-typedef WorkingMerge = void Function(bool ret);
+typedef WorkingMerge = void Function(bool value);
 typedef DownloadFailed = void Function(String reason);
 typedef DownloadingLog = void Function(String log);
 typedef DownloadTaskId = void Function(int id);
+typedef PrepareWorking = void Function(bool value);
 
 abstract class HyperInterface {
   void startDownload({
     required String url,
     required String savePath,
     required int threadCount,
+    required PrepareWorking prepareWorking,
     required WorkingMerge workingMerge,
     required DownloadSpeedProgress downloadProgress,
     required DownloadComplete downloadComplete,

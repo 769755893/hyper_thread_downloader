@@ -20,9 +20,12 @@ class HyperDownload extends HyperInterface with Task {
   int total = 0;
   int id = 0;
   MainThreadManager? _mainThreadManager;
-  Completer? _prepare;
+  Completer? _prepareCompleter;
+  Completer? _cancelCompleter;
 
-  Future? get prepareWork => _prepare?.future;
+  Future? get _prepareWork => _prepareCompleter?.future;
+
+  Future? get _cancelWork => _cancelCompleter?.future;
 
   bool pass({
     required String savePath,
@@ -50,12 +53,29 @@ class HyperDownload extends HyperInterface with Task {
     return true;
   }
 
+  Future setupWaiting(PrepareWorking prepareWorking) async {
+    prepareWorking(true);
+    if (_prepareCompleter?.isCompleted == false) {
+      await _prepareWork;
+    }
+    if (_cancelCompleter?.isCompleted == false) {
+      await _cancelWork;
+    }
+    _mainThreadManager = MainThreadManager();
+    _prepareCompleter = Completer();
+    _cancelCompleter = Completer();
+    _prepareCompleter?.future.then((value) {
+      prepareWorking(false);
+    });
+  }
+
   @override
   Future startDownload({
     required String url,
     required String savePath,
     required int threadCount,
     int? fileSize,
+    required PrepareWorking prepareWorking,
     required WorkingMerge workingMerge,
     required DownloadSpeedProgress downloadProgress,
     required DownloadComplete downloadComplete,
@@ -75,15 +95,14 @@ class HyperDownload extends HyperInterface with Task {
       downloadFailed: downloadFailed,
       downloadTaskId: downloadTaskId,
     )) return;
-    _mainThreadManager = MainThreadManager();
-    _prepare = Completer();
+    await setupWaiting(prepareWorking);
     downloadTaskId(id);
     bool chunkFailed = false;
     await initChunk(
       url: url,
       threadCount: threadCount,
       fallback: (Object e) {
-        _prepare?.complete();
+        _prepareCompleter?.complete();
         downloadFailed('chunk init failed with: $e');
         chunkFailed = true;
       },
@@ -104,11 +123,11 @@ class HyperDownload extends HyperInterface with Task {
         downloadFailed(reason);
       },
       speedManager: speedManager,
-      completer: Completer(),
       downloadComplete: downloadComplete,
       allChunks: allChunks,
       downloadInfo: DownloadInfo(url: url, savePath: savePath),
-      prepareCompleter: _prepare,
+      prepareCompleter: _prepareCompleter,
+      cancelCompleter: _cancelCompleter,
       workingMerge: workingMerge,
       downloadingLog: downloadingLog,
     );
