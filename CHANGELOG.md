@@ -1,3 +1,6 @@
+## 1.0.4+2
+* fix bugs and seal interface.
+
 ## 1.0.4+1
 * format code
 

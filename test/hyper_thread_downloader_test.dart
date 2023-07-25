@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:hyper_thread_downloader/hyper_thread_export.dart';
+import 'package:hyper_thread_downloader/hyper_thread_downloader.dart';
 import 'package:hyper_thread_downloader/src/util/string_util.dart';
 
 void main() async {

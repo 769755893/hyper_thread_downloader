@@ -4,7 +4,6 @@ import 'dart:isolate';
 
 import 'package:dio/dio.dart';
 import 'package:hyper_thread_downloader/src/base/task.dart';
-import 'package:hyper_thread_downloader/src/interface/hyper_interface.dart';
 import 'package:hyper_thread_downloader/src/model/thread_status.dart';
 import 'package:hyper_thread_downloader/src/util/log_util.dart';
 
