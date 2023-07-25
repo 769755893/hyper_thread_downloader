@@ -119,7 +119,7 @@ class HyperDownload extends HyperInterface with Task {
       downloadTaskId: downloadTaskId,
     )) return;
     await setupWaiting(prepareWorking);
-    if (await (chunksInit(url: url, threadCount: threadCount, downloadFailed: downloadFailed, fileSize: fileSize))) {
+    if (!(await chunksInit(url: url, threadCount: threadCount, downloadFailed: downloadFailed, fileSize: fileSize))) {
       return;
     }
     start(
