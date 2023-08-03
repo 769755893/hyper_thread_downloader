@@ -15,10 +15,10 @@ import '../util/speed_manager.dart';
 //TODO thread merge speed up
 //TODO thread guard when weak network.
 class HyperDownload extends HyperInterface with Task {
-  late Chunks chunks;
-  final Dio dio = Dio();
-  int total = 0;
-  int id = 0;
+  late Chunks _chunks;
+  final Dio _dio = Dio();
+  int _total = 0;
+  int _id = 0;
   MainThreadManager? _mainThreadManager;
   Completer? _prepareCompleter;
   Completer? _cancelCompleter;
@@ -44,13 +44,13 @@ class HyperDownload extends HyperInterface with Task {
       downloadFailed('download url is empty');
       return false;
     }
-    id = taskStart(url: url);
-    if (id == -1) {
-      downloadTaskId(id);
+    _id = taskStart(url: url);
+    if (_id == -1) {
+      downloadTaskId(_id);
       HyperLog.log('taskId -1 return: ${taskMap.values}');
       return false;
     }
-    downloadTaskId(id);
+    downloadTaskId(_id);
     return true;
   }
 
@@ -92,6 +92,22 @@ class HyperDownload extends HyperInterface with Task {
     return ret;
   }
 
+  ///
+  /// in almost case, you just only use these two interface for enough.
+  /// one is startDownload
+  /// two is stopDownload
+  ///
+  /// @params
+  /// url: the download url
+  /// savePath: your save path , the path should contains your save file name.
+  /// threadCount: the count you want to start thread count, recommend it should be less than cpu count.
+  /// fileSize: the fileSize, just for the another safety if the fileSize get filed, so if you already has fileSize, just put it on.
+  /// prepareWorking: the prepare working process callback, for the init process, and resume process, you can do that progress dialog to control user behavior.
+  /// workingMerge: the merge thread start merge the part file process, you also can do that progress dialog when this callback called.
+  /// downloadComplete: not need to mentioned.
+  /// downloadFailed: not need to mentioned.
+  /// downloadTaskId: the task id you start about current download task, not yet support multi task in single instance. so the only work is to stop download using it.
+  /// downloadingLog: the log for sub thread failed or other etc.
   @override
   Future startDownload({
     required String url,
@@ -143,12 +159,12 @@ class HyperDownload extends HyperInterface with Task {
     required WorkingMerge workingMerge,
     required DownloadingLog downloadingLog,
   }) {
-    final allChunks = chunks.allChunks;
+    final allChunks = _chunks.allChunks;
     final speedManager = SpeedManager(
       chunks: allChunks,
       downloadSpeedProgress: downloadProgress,
       size: allChunks.length,
-      total: total,
+      total: _total,
     );
     _mainThreadManager?.setupInfo(
       downloadFailed: (String reason) {
@@ -188,8 +204,8 @@ class HyperDownload extends HyperInterface with Task {
       return;
     }
 
-    total = ret;
-    chunks = Chunks(total: total, chunks: threadCount);
+    _total = ret;
+    _chunks = Chunks(total: _total, chunks: threadCount);
   }
 
   Future<int?> fileLength({
@@ -198,7 +214,7 @@ class HyperDownload extends HyperInterface with Task {
   }) async {
     int? ret;
     await run(futureBlock: () async {
-      final res = await dio.headUri(Uri.parse(url));
+      final res = await _dio.headUri(Uri.parse(url));
       ret = int.parse(res.headers.value(HttpHeaders.contentLengthHeader)!);
     }, fallback: (e) {
       print(e);
@@ -207,6 +223,8 @@ class HyperDownload extends HyperInterface with Task {
     return ret;
   }
 
+  /// the interface for stop current download task with task id.
+  /// when you need resume the next, just call the startDownload again.
   @override
   void stopDownload({required int id}) {
     HyperLog.log('stop task id: $id');

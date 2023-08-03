@@ -1,3 +1,6 @@
+## 1.0.4+4
+* add interface explain.
+
 ## 1.0.4+3
 * seal interface.
 
