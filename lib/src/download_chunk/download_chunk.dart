@@ -129,7 +129,10 @@ class PartDownload with Task {
           }
           if (e.error is SocketException) {
             HyperLog.log('download failed with socket exception');
-            sendStatus(status: ThreadStatus.downloadFailed, exit: true, basicType: 'sub thread failed with socket exception: ${e.error}');
+            sendStatus(
+                status: ThreadStatus.downloadFailed,
+                exit: true,
+                basicType: 'sub thread failed with socket exception: ${e.error}');
             return;
           }
           final msg = 'download failed with dio error: $e, ${e.error}';
@@ -182,6 +185,7 @@ class PartDownload with Task {
   }
 
   Future renameFile() async {
+    sendStatus(status: ThreadStatus.rename, exit: false);
     await run(
       futureBlock: () async {
         await partialFile?.rename(partFileName);

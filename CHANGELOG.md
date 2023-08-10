@@ -1,3 +1,6 @@
+## 1.0.5
+* fix cancel waiting.
+
 ## 1.0.4+5
 * format params.
 

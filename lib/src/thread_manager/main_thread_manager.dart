@@ -104,7 +104,7 @@ class MainThreadManager with Task {
   bool allCancel() {
     bool ret = true;
     for (final t in threadsStatus.values) {
-      if (t == ThreadStatus.downloading) {
+      if (t == ThreadStatus.downloading || t == ThreadStatus.merging || t == ThreadStatus.rename) {
         ret = false;
         break;
       }
@@ -118,7 +118,7 @@ class MainThreadManager with Task {
     for (final e in threadsStatus.entries) {
       final i = e.key;
       final t = e.value;
-      if (t != ThreadStatus.downloadFailed) {
+      if (t != ThreadStatus.downloadFailed && t != ThreadStatus.mergeFailed && t != ThreadStatus.renameFailed) {
         HyperLog.log('check all failed not true: index: $i, status: $t');
         ret = false;
         break;
