@@ -1,6 +1,6 @@
 name: hyper_thread_downloader
 description: A Hyper Thread Downloader work with Dio packages.
-version: 1.0.5
+version: 1.0.5+1
 repository: https://github.com/769755893/hyper_thread_downloader
 
 environment:

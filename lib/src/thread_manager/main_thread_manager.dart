@@ -134,12 +134,14 @@ class MainThreadManager with Task {
       final entry = dir.listSync();
       for (final f in entry) {
         if (endWidth != null) {
-          if (f.path.contains('ipsw') && f.path.endsWith(endWidth)) {
-            await f.delete();
+          if (f.path.contains(downloadInfo.fileName) && f.path.endsWith(endWidth)) {
+            try {
+              await f.delete();
+            } catch (_){}
+            continue;
           }
-          continue;
         }
-        if (f.path.contains('ipsw')) {
+        if (f.path.contains(downloadInfo.fileName)) {
           await f.delete();
         }
       }

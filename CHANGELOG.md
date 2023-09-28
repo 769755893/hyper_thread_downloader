@@ -1,3 +1,6 @@
+## 1.0.5+1
+* Improve general judgment.
+
 ## 1.0.5
 * fix cancel waiting.
 
