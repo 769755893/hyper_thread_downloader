@@ -1,3 +1,6 @@
+## 1.0.5+2
+* Reverse the meanings of process callback.
+
 ## 1.0.5+1
 * Improve general judgment.
 

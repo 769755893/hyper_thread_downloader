@@ -159,7 +159,7 @@ class MainThreadManager with Task {
     HyperLog.log('all thread status: ${threadsStatus.entries.toString()}');
     if (allComplete()) {
       bool err = false;
-      workingMerge(false);
+      workingMerge(true);
       await mergeSub(fallback: (e) {
         err = true;
         downloadFailed(e);
@@ -168,7 +168,7 @@ class MainThreadManager with Task {
         err = true;
         downloadFailed(e);
       });
-      workingMerge(true);
+      workingMerge(false);
       if (!err) {
         HyperLog.log('download complete');
         downloadComplete();

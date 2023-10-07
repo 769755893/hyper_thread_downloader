@@ -56,7 +56,7 @@ class HyperDownload extends HyperInterface with Task {
 
   @override
   Future setupWaiting(PrepareWorking prepareWorking) async {
-    prepareWorking(false);
+    prepareWorking(true);
     if (_prepareCompleter?.isCompleted == false) {
       await _prepareWork;
     }
@@ -67,7 +67,7 @@ class HyperDownload extends HyperInterface with Task {
     _prepareCompleter = Completer();
     _cancelCompleter = Completer();
     _prepareCompleter?.future.then((value) {
-      prepareWorking(true);
+      prepareWorking(false);
     });
   }
 
