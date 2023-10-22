@@ -1,3 +1,6 @@
+## 1.0.5+3
+* Opt test and some exception catch.
+
 ## 1.0.5+2
 * Reverse the meanings of process callback.
 

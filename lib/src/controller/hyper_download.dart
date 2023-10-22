@@ -12,8 +12,11 @@ import '../base/task.dart';
 import '../interface/hyper_interface.dart';
 import '../util/speed_manager.dart';
 
-//TODO thread merge speed up
-//TODO thread guard when weak network.
+//TODO 1.thread merge speed up
+//TODO 2.Opt thread guard when weak network.
+//TODO 3.multi task in single instance, this work just seal the main and sub manager associate with taskId in a function type map ,
+//which can be done these like that, anyone can do it if you have free time. but also can use outer seal the whole hyper_thread_downloader
+//in each instance, just for convenience.
 class HyperDownload extends HyperInterface with Task {
   late Chunks _chunks;
   final Dio _dio = Dio();

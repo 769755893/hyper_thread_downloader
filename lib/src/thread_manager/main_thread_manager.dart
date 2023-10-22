@@ -128,24 +128,26 @@ class MainThreadManager with Task {
   }
 
   Future cleanFailedFiles({String? endWidth}) async {
-    try {
+    await run(futureBlock: () async {
       final baseFolder = downloadInfo.savePath.dropLastWhile(Platform.pathSeparator);
       final dir = Directory(baseFolder);
       final entry = dir.listSync();
       for (final f in entry) {
         if (endWidth != null) {
           if (f.path.contains(downloadInfo.fileName) && f.path.endsWith(endWidth)) {
-            try {
+            await run(futureBlock: () async {
               await f.delete();
-            } catch (_){}
+            }, fallback: (e){});
             continue;
           }
         }
         if (f.path.contains(downloadInfo.fileName)) {
-          await f.delete();
+          await run(futureBlock: () async {
+            await f.delete();
+          }, fallback: (e){});
         }
       }
-    } catch (_) {}
+    }, fallback: (e) {});
   }
 
   Future pickAllChild({
